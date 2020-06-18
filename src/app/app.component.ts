@@ -1,50 +1,49 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormGroup, Validators, FormControl } from '@angular/forms';
-import { NgSelectComponent } from '@ng-select/ng-select';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
 
     productData: any[] = [
         {
-            "id": 222,
-            "name": "production1"
+            id: 222,
+            name: 'production1'
         },
         {
-            "id": 3356,
-            "name": "production2"
+            id: 3356,
+            name: 'production2'
         },
         {
-            "id": 8085,
-            "name": "production3"
+            id: 8085,
+            name: 'production3'
         },
         {
-            "id": 3946,
-            "name": "production4"
+            id: 3946,
+            name: 'production4'
         },
         {
-            "id": 3140,
-            "name": "production5"
+            id: 3140,
+            name: 'production5'
         },
         {
-            "id": 3681,
-            "name": "production6"
+            id: 3681,
+            name: 'production6'
         },
         {
-            "id": 1,
-            "name": "Pankti"
+            id: 1,
+            name: 'Pankti'
         },
         {
-            "id": 2,
-            "name": "user"
+            id: 2,
+            name: 'user'
         }
     ];
     productForm: FormGroup;
-    filter_value: any;
+    filterValue: any;
     filteredRecords = [];
     selectFromList = false;
 
@@ -64,10 +63,10 @@ export class AppComponent {
 
     OnSearch(select, fieldName) {
         this.productForm.get(fieldName).setValue(null);
-        this.filter_value = event['target']['value'];
-        this.filterRecords(this.filter_value);
-        select.searchTerm = this.filter_value;
-        select.filterValue = this.filter_value;
+        this.filterValue = event['target']['value'];
+        this.filterRecords(this.filterValue);
+        select.searchTerm = this.filterValue;
+        select.filterValue = this.filterValue;
     }
 
     filterRecords(searchTerm) {
@@ -79,22 +78,22 @@ export class AppComponent {
     }
 
     changeFn(select, fieldName) {
-        this.filter_value = '';
-        select.searchTerm = select.selectedItems[0]['label'];
-        select.filterValue = select.selectedItems[0]['label'];
+        this.filterValue = '';
+        select.searchTerm = select.selectedItems[0].label;
+        select.filterValue = select.selectedItems[0].label;
         this.selectFromList = false;
         this.optionSelected(fieldName);
     }
 
     onBlur(select, fieldName) {
-        if (this.filter_value) {
-            const data = this.filteredRecords.filter(state => state.name === this.filter_value);
+        if (this.filterValue) {
+            const data = this.filteredRecords.filter(state => state.name === this.filterValue);
             if (data.length === 1) {
                 this.selectFromList = false;
                 this.productForm.get(fieldName).setValue(data[0].id);
                 this.optionSelected(fieldName);
             } else {
-                select.searchTerm = this.filter_value;
+                select.searchTerm = this.filterValue;
                 this.productForm.get(fieldName).setValue(null);
             }
         }
