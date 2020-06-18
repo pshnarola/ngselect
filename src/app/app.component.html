@@ -1,0 +1,27 @@
+<router-outlet></router-outlet>
+
+<div class="example-form">
+    <form [formGroup]="productForm" (submit)="submit()">
+        <ng-select #select formControlName="prodCode" placeholder="Search" [items]="filteredRecords" [searchable]="true"
+            [clearable]="false" bindLabel="name" bindValue="id" (open)="onOpen(select)" (change)="changeFn(select, 'prodCode')"
+            (search)="OnSearch(select, 'prodCode')"
+            (blur)="onBlur(select, 'prodCode')">
+        </ng-select>
+        <p style="color: red;" *ngIf="selectFromList">Please select options from the list</p>
+        <p style="color: red;" *ngIf="filteredRecords.length === 0">No option available</p>
+        <button style="margin-top: 15px;" class="btn btn-primary" type="submit">Submit</button>
+    </form>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <pre>{{productForm.value|json}}</pre>
+    <pre>{{productForm.valid}}</pre>
+</div>
