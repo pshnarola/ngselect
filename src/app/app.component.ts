@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, Validators, FormControl, FormBuilder } from '@angular/forms';
+import { FormGroup, Validators, FormBuilder } from '@angular/forms';
 import { CreateFormFields } from './field.interface';
 import { CONFIG } from './app.config';
 import { HttpClient } from '@angular/common/http';
@@ -11,8 +11,6 @@ import * as CryptoJS from 'crypto-js';
     styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-    bufferSize = 300;
-    numberOfItemsFromEndBeforeFetchingMore = 20;
     searchBoxGroup: FormGroup;
     searchBoxObj = {};
     searchBoxes = [];
@@ -38,7 +36,7 @@ export class AppComponent implements OnInit {
     constructor(
         private fb: FormBuilder,
         private http: HttpClient
-    ) {}
+    ) { }
 
     ngOnInit() {
         this.createSearchBoxes();
@@ -49,19 +47,17 @@ export class AppComponent implements OnInit {
             fieldsArray: this.searchBoxConfig.fields,
             groupObj: this.fb.group({})
         }, this.isModalPopup);
-        this.searchBoxConfig.fields.forEach((searchFieldRow, rowIndex) => {
+
+        this.searchBoxConfig.fields.forEach(searchFieldRow => {
             searchFieldRow.forEach(searchField => {
                 if (!this.searchBoxes.includes(searchField.name)) {
                     this.searchBoxes.push(searchField.name);
                     this.searchBoxObj[searchField.name] = {
                         options: [],
-                        optionBuffer: [],
                         filteredRecords: [],
                         filterValue: null,
                         apiReqObj: this.createReqObj(searchField),
-                        selectFromList: false,
-                        totalPage: 0,
-                        currentPage: 0
+                        selectFromList: false
                     };
                     if (!this.firstAPICalled && searchField.fieldType !== 'primary') {
                         this.firstAPICalled = true;
@@ -72,92 +68,54 @@ export class AppComponent implements OnInit {
         });
     }
 
-    createFormFields(fieldConfig: CreateFormFields, applySearchValidation = false) {
-        fieldConfig.fieldsArray.forEach(fieldsRow => {
-            fieldsRow.forEach(field => {
-                field.value = (fieldConfig.fieldValue && fieldConfig.fieldValue[field.valueKey]) || '';
-                if (field.type === 'button' || field.type === 'blank') {
-                    return;
-                }
-                if (field.type === 'select') {
-                    field.options = (fieldConfig.masterData && fieldConfig.masterData[field.option]) || [];
-                }
-                if (!fieldConfig.groupObj.contains(field.name)) {
-                    const control = this.fb.control(
-                        field.value,
-                        this.bindValidations(field[(applySearchValidation ? 'searchValidations' : 'validations')] || [])
-                    );
-                    fieldConfig.groupObj.addControl(field.name, control);
-                } else {
-                    fieldConfig.groupObj.get(field.name).setValue(field.value);
-                }
-            });
-        });
-        return fieldConfig.groupObj;
-    }
-
-    bindValidations(validations: any) {
-        if (validations.length > 0) {
-            const validList = [];
-            validations.forEach(valid => {
-                validList.push(valid.validator);
-            });
-            return Validators.compose(validList);
-        }
-        return null;
-    }
-
-    onOpen(select, fieldName) {
-        this.filterRecords(select.filterValue, fieldName);
-    }
-
-    OnSearch(select, fieldName) {
-        this.searchBoxGroup.get(fieldName).setValue(null);
-        this.searchBoxObj[fieldName].filterValue = event['target']['value'];
-        this.filterRecords(this.searchBoxObj[fieldName].filterValue, fieldName);
-        select.searchTerm = this.searchBoxObj[fieldName].filterValue;
-        select.filterValue = this.searchBoxObj[fieldName].filterValue;
-    }
-
     filterRecords(searchTerm, fieldName) {
         if (searchTerm) {
-            this.searchBoxObj[fieldName].filteredRecords = this.searchBoxObj[fieldName].optionBuffer.
+            this.searchBoxObj[fieldName].filteredRecords = this.searchBoxObj[fieldName].options.
                 filter(option => option.toLowerCase().includes(searchTerm.toLowerCase()));
         } else {
-            this.searchBoxObj[fieldName].filteredRecords = JSON.parse(JSON.stringify(this.searchBoxObj[fieldName].optionBuffer));
+            this.searchBoxObj[fieldName].filteredRecords = JSON.parse(JSON.stringify(this.searchBoxObj[fieldName].options));
         }
     }
 
-    changeFn(select, fieldObj) {
-        this.searchBoxObj[fieldObj.name].filterValue = '';
-        select.searchInput.nativeElement.value = select.selectedItems[0].value;
+    onOpen(fieldName) {
+        this.filterRecords(this.searchBoxObj[fieldName].filterValue, fieldName);
+    }
+
+    // Function will be called when user tries to search options
+    onSearch(select, fieldName) {
+        this.searchBoxGroup.get(fieldName).setValue(null);
+        // this.searchBoxObj[fieldName].filterValue = event['target']['value'];
+        this.searchBoxObj[fieldName].filterValue = select.searchTerm;
+        this.filterRecords(this.searchBoxObj[fieldName].filterValue, fieldName);
+    }
+
+    // Function will be called when option is selected from the list
+    onSelection(select, fieldObj) {
+        this.searchBoxObj[fieldObj.name].filterValue = select.selectedItems[0].value;
         this.searchBoxObj[fieldObj.name].selectFromList = false;
         this.optionSelected(select.selectedItems[0].value, fieldObj);
     }
 
+    // Function will be called when user change the focus of dropdown
     onBlur(select, fieldObj) {
+        select.searchTerm = this.searchBoxObj[fieldObj.name].filterValue;
         if (this.searchBoxObj[fieldObj.name].filterValue) {
-            select.searchInput.nativeElement.value = this.searchBoxObj[fieldObj.name].filterValue;
-            select.searchTerm = this.searchBoxObj[fieldObj.name].filterValue;
             const data = this.searchBoxObj[fieldObj.name].filteredRecords.
-                filter(option => option === this.searchBoxObj[fieldObj.name].filterValue);
+                filter(option => option.trim() === this.searchBoxObj[fieldObj.name].filterValue);
             if (data.length === 1) {
-                // this.selectFromList = false;
                 this.searchBoxObj[fieldObj.name].selectFromList = false;
-                this.searchBoxGroup.get(fieldObj.name).setValue(data[0]);
                 this.optionSelected(data[0], fieldObj);
             } else {
                 this.searchBoxGroup.get(fieldObj.name).setValue(null);
             }
         }
         if (this.searchBoxObj[fieldObj.name].filteredRecords.length > 0 && !this.searchBoxGroup.value[fieldObj.name]) {
-            // this.selectFromList = true;
             this.searchBoxObj[fieldObj.name].selectFromList = true;
         }
     }
 
-    optionSelected(selectedItems, fieldObj) {
-        this.searchBoxGroup.value[fieldObj.name] = selectedItems;
+    optionSelected(selectedOption, fieldObj) {
+        this.searchBoxGroup.get(fieldObj.name).setValue(selectedOption);
         if (fieldObj.childKey !== '') {
             const reqObj = JSON.parse(JSON.stringify(this.searchBoxObj[fieldObj.childKey].apiReqObj));
             reqObj.conditions.forEach(conditionObj => {
@@ -165,33 +123,6 @@ export class AppComponent implements OnInit {
             });
             this.fillDropDown(reqObj);
         }
-        console.log('Option selected for = ', (fieldObj.name), 'with value = ', this.searchBoxGroup.get(fieldObj.name).value);
-    }
-
-    submit() { }
-
-
-    onScrollToEnd(fieldName) {
-        this.fetchMore(fieldName);
-    }
-
-    onScroll({ end }, fieldName) {
-        if (this.searchBoxObj[fieldName].options.length <= this.searchBoxObj[fieldName].optionBuffer.length) {
-            return;
-        }
-
-        if (end + this.searchBoxObj[fieldName].numberOfItemsFromEndBeforeFetchingMore >= this.searchBoxObj[fieldName].optionBuffer.length) {
-            this.fetchMore(fieldName);
-        }
-    }
-
-    private fetchMore(fieldName) {
-        const len = this.searchBoxObj[fieldName].optionBuffer.length;
-        const more = this.searchBoxObj[fieldName].options.slice(len, this.bufferSize + len);
-        setTimeout(() => {
-            this.searchBoxObj[fieldName].optionBuffer = this.searchBoxObj[fieldName].optionBuffer.concat(more);
-            this.filterRecords(this.searchBoxObj[fieldName].filterValue, fieldName);
-        }, 200);
     }
 
     createReqObj(searchField) {
@@ -239,11 +170,77 @@ export class AppComponent implements OnInit {
             // Fill dropdown options using API response
             this.fillDropDownOption(reqObjClone).toPromise().then(options => {
                 this.searchBoxObj[reqObj.columnName].options = options;
-                this.searchBoxObj[reqObj.columnName].optionBuffer = this.searchBoxObj[reqObj.columnName].options.splice(0, this.bufferSize);
             }).catch(err => {
                 this.searchBoxObj[reqObj.columnName].options = [];
             });
         }
+    }
+
+    getOptions(reqObjClone) {
+        return new Promise((resolve, reject) => {
+            try {
+                const options = [];
+                this.dropDownRecords.forEach((record, index) => {
+                    let conditionTrue = 0;
+                    reqObjClone.conditions.forEach(condition => {
+                        const columnName = condition.conditionColumnName;
+                        const columnValue = condition.conditionValue;
+                        if (record[columnName] === columnValue) {
+                            conditionTrue++;
+                        }
+                        if (reqObjClone.conditions.length === conditionTrue) {
+                            options.push(record[reqObjClone.columnName]);
+                        }
+                        if (index === (this.dropDownRecords.length - 1)) {
+                            resolve(options);
+                        }
+                    });
+                });
+            } catch (error) {
+                resolve([]);
+            }
+        });
+    }
+    submit() { }
+
+
+
+
+
+
+    createFormFields(fieldConfig: CreateFormFields, applySearchValidation = false) {
+        fieldConfig.fieldsArray.forEach(fieldsRow => {
+            fieldsRow.forEach(field => {
+                field.value = (fieldConfig.fieldValue && fieldConfig.fieldValue[field.valueKey]) || '';
+                if (field.type === 'button' || field.type === 'blank') {
+                    return;
+                }
+                if (field.type === 'select') {
+                    field.options = (fieldConfig.masterData && fieldConfig.masterData[field.option]) || [];
+                }
+                if (!fieldConfig.groupObj.contains(field.name)) {
+                    const control = this.fb.control(
+                        field.value,
+                        this.bindValidations(field[(applySearchValidation ? 'searchValidations' : 'validations')] || [])
+                    );
+                    fieldConfig.groupObj.addControl(field.name, control);
+                } else {
+                    fieldConfig.groupObj.get(field.name).setValue(field.value);
+                }
+            });
+        });
+        return fieldConfig.groupObj;
+    }
+
+    bindValidations(validations: any) {
+        if (validations.length > 0) {
+            const validList = [];
+            validations.forEach(valid => {
+                validList.push(valid.validator);
+            });
+            return Validators.compose(validList);
+        }
+        return null;
     }
 
     fillDropDownOption(reqObj) {
@@ -279,32 +276,6 @@ export class AppComponent implements OnInit {
             iv: initVector
         });
         return t.ciphertext.toString(CryptoJS.enc.Base64);
-    }
-
-    getOptions(reqObjClone) {
-        return new Promise((resolve, reject) => {
-            try {
-                const options = [];
-                this.dropDownRecords.forEach((record, index) => {
-                    let conditionTrue = 0;
-                    reqObjClone.conditions.forEach(condition => {
-                        const columnName = condition.conditionColumnName;
-                        const columnValue = condition.conditionValue;
-                        if (record[columnName] === columnValue) {
-                            conditionTrue++;
-                        }
-                        if (reqObjClone.conditions.length === conditionTrue) {
-                            options.push(record[reqObjClone.columnName]);
-                        }
-                        if (index === (this.dropDownRecords.length - 1)) {
-                            resolve(options);
-                        }
-                    });
-                });
-            } catch (error) {
-                resolve([]);
-            }
-        });
     }
 
 }
