@@ -1,14 +1,64 @@
 <div class="example-form">
-    <form [formGroup]="productForm" (submit)="submit()">
-        <ng-select #select formControlName="prodCode" placeholder="Search" [items]="filteredRecords" [searchable]="true"
-            [clearable]="false" bindLabel="name" bindValue="id" (open)="onOpen(select)"
+    <!-- <form [formGroup]="productForm" (submit)="submit()"> -->
+        <!-- <ng-select #select formControlName="prodCode" placeholder="Search" [items]="searchobj.filteredRecords"
+            [searchable]="true" [clearable]="false" bindLabel="name" bindValue="id" (open)="onOpen(select)"
             (change)="changeFn(select, 'prodCode')" (search)="OnSearch(select, 'prodCode')"
-            (blur)="onBlur(select, 'prodCode')">
-        </ng-select>
-        <p style="color: red;" *ngIf="selectFromList">Please select options from the list</p>
-        <p style="color: red;" *ngIf="filteredRecords.length === 0">No option available</p>
-        <button style="margin-top: 15px;" class="btn btn-primary" type="submit">Submit</button>
+            (blur)="onBlur(select, 'prodCode')" (scroll)="onScroll($event)" (scrollToEnd)="onScrollToEnd()">
+            <ng-template ng-header-tmp>
+                <small class="form-text text-muted">Loaded {{searchobj.productBuffer.length}} of
+                    {{searchobj.productData.length}}</small>
+            </ng-template>
+        </ng-select> -->
+        <!-- <p style="color: red;" *ngIf="searchobj.selectFromList">Please select options from the list</p>
+        <p style="color: red;" *ngIf="searchobj.filteredRecords.length === 0">No option available</p>
+        <button style="margin-top: 15px;" class="btn btn-primary" type="submit">Submit</button> -->
+    <!-- </form> -->
+    <!-- <pre>{{productForm.value|json}}</pre>
+    <pre>{{productForm.valid}}</pre> -->
+</div>
+
+
+
+<div class="content-head example-form" [ngClass]="{'modal-popup': isModalPopup}">
+    <form class="content-head-form" [formGroup]='searchBoxGroup'>
+        <div class="row" *ngFor='let field_row of searchBoxConfig.fields;'>
+            <ng-container *ngFor="let field of field_row">
+                <div [ngClass]="(isModalPopup) ? 'col-sm-6' : 'col-lg-3 col-sm-6'"
+                    *ngIf="field.fieldType !== 'primary'">
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <label for="{{field.name}}">{{ field.label }}</label>
+                            </div>
+                            <div class="col-log-8">
+                                <ng-select #select [formControlName]='field.name' placeholder="Search"
+                                    [items]="searchBoxObj[field.name].optionBuffer" [searchable]="true"
+                                    [clearable]="false" (open)="onOpen(select, field.name)"
+                                    (change)="changeFn(select, field)" (search)="OnSearch(select, field.name)"
+                                    (blur)="onBlur(select, field)" (scroll)="onScroll($event, field.name)"
+                                    (scrollToEnd)="onScrollToEnd(field.name)">
+                                    <ng-template ng-header-tmp>
+                                        <small class="form-text text-muted">Loaded {{searchBoxObj[field.name].optionBuffer.length}} of
+                                            {{searchBoxObj[field.name].options.length}}</small>
+                                    </ng-template>
+                                </ng-select>
+                            </div>
+                        </div>
+                        <div class="row"
+                            *ngIf="(searchBoxGroup.get(field.name).dirty || searchBoxGroup.get(field.name).touched)">
+                            <div class="col-lg-8 offset-4 error-wrapper1">
+                                <p class="error-msg" *ngIf='searchBoxObj[field.name].invalidKey === 1'>
+                                    Invalid key
+                                </p>
+                                <p class="error-msg" *ngIf='searchBoxObj[field.name].invalidKey === 2'>
+                                    Please select option from list
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+
     </form>
-    <pre>{{productForm.value|json}}</pre>
-    <pre>{{productForm.valid}}</pre>
 </div>

@@ -5,6 +5,7 @@ import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
     declarations: [
@@ -16,7 +17,8 @@ import { NgSelectModule } from '@ng-select/ng-select';
         BrowserAnimationsModule,
         ReactiveFormsModule,
         FormsModule,
-        NgSelectModule
+        NgSelectModule,
+        HttpClientModule
     ],
     providers: [],
     bootstrap: [AppComponent]
